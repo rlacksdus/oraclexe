@@ -7,15 +7,15 @@
     여러행(그룹) 함수 - 여러행 매개변수를 받아 결과 값 반환
 */
 
---단일행 함수
+-- 단일행 함수
 
---대소문자 변환 함수
---LOWER() 함수 문자열을 소문자로 변환
+-- 대소문자 변환 함수
+-- LOWER() 함수 문자열을 소문자로 변환
 SELECT employee_id, last_name, department_id
 FROM employees
 WHERE LOWER(last_name)='higgins';
 
---UPPER()함수 - 문자열을 대문자로 변환
+-- UPPER()함수 - 문자열을 대문자로 변환
 SELECT UPPER('higgins') FROM dual;
 
 -- INITCAP() 함수 - 문자열의 첫 글자를 대문자로 변환
@@ -63,21 +63,17 @@ SELECT TRUNC(45.926,2) FROM dual;
 --mod() - 나눈 나머지를 반환한다.
 SELECT MOD(16000, 300) FROM dual;
 
---CEIL() - 주어진 숫자를 올림하여 정수로 반환한다.
+-- CEIL() - 주어진 숫자를 올림하여 정수로 반환한다.
 SELECT CEIL(45.926) FROM dual;
 
-
---날짜 함수
-
---SYSDATE - 현재 날짜와 시간을 얻을수 있는 pseudo-column
-SELECT SYSDATE FROM dual;
 
 /*
 날짜 연산 
     날짜에 숫자를 더하거나 빼서 결과 날짜 값을 구한다.
     두 날자 사이의 일수를 알아내기 위해 빼기연산을 합니다.
 */
-SELECT last_name, (sysdate - hire_date) / 7 AS WEEKS
+
+SELECT last_name, (sysdate - hire_date)/7 AS WEEKS
 FROM employees
 WHERE department_id = 90;
 
@@ -91,19 +87,25 @@ WHERE department_id = 90;
     ROUND(date, format) : 날짜를 지정된 형식으로 반올림합니다.
     TRUNC(date, format) : 날짜를 지정된 형식으로 절삭합니다.
 */
---SYSDATE 오늘 날자
 
 SELECT MONTHS_BETWEEN(TO_DATE('2017-12-22', 'YYYY-MM-DD'), TO_DATE('2017-05-22', 'YYYY-MM-DD'))FROM dual;
+
 SELECT ADD_MONTHS(TO_DATE('2022-12-16', 'YYYY-MM-DD'), 1)FROM dual;
+
 SELECT NEXT_DAY(TO_DATE('2028-08-05', 'YYYY-MM-DD'), 7)FROM dual;
+
 SELECT LAST_DAY(TO_DATE('2023-08-05', 'YYYY-MM-DD'))FROM dual;
-SELECT ROUND(TO_DATE('2023-06-15, 'YYYY-MM-DD'), 'MONTH')FROM dual; 
-SELECT TRUNC(SYSDATE, 'MONTH')FROM dual; 
+
+SELECT ROUND(TO_DATE('2023-06-15', 'YYYY-MM-DD'), 'MONTH')FROM dual;
+
+SELECT TRUNC(SYSDATE, 'MONTH')FROM dual;
 
 
---변환 함수
 
 /*
+변환 함수
+
+
 TO_CHAR() 함수 - 날짜 또는 숫자를 문자열로 변환
 
     YYYY - 전체 연도를 숫자로 나타냅니다.
@@ -123,8 +125,99 @@ TO_CHAR() 함수 - 날짜 또는 숫자를 문자열로 변환
     
 */
 
-SELECT last_name, TO_CHAR(hire_date, 'YYYY/MM/DD HH24:MI:ss') AS HIREDATE
-FROM employyes;
+SELECT last_name, TO_CHAR(hire_date, 'YYYY/MM/DD HH24:MI:SS') AS HIREDATE
+FROM employees;
+
+--TIMESTAMP - 날짜 정보 + 밀리세컨드
+SELECT TO_CHAR(SYSTIMESTAMP, 'YYY-MM-DD HH24:MI:SS.FF2')FROM dual;
+
+/*
+TO_CHAR() 함수를 숫자에 사용할 때
+    9- 숫자로 나타냅니다
+    0- 0이 표시되도록 강제로 적용합니다
+    $ - 부동 달러 기호를 배치합니다.
+    L - 부동 로컬 통화 기호를 사용합니다.
+    . - 소수점을 출력합니다.
+    , - 전단위 표시자로 쉼표를 출력합니다.
+*/
+SELECT TO_CHAR(salary, 'L99,999.00') SALARY
+FROM employees
+WHERE last_name = 'Ernst';
+
+--TO_DATE() 함수 - 문자열을 DATE 타입으로 변환
+SELECT last_name, TO_CHAR(hire_date, 'YYYY-MM-DD')
+FROM employees
+WHERE hire_date < TO_DATE('2005-01-01', 'YYYY-MM-DD');
+
+/*
+함수 중첩
+    단일 행 함수는 어떠한 레벨로도 중첩될 수 있다.
+    중첩된 함수는 가장 깊은 레벨에서 가장 낮은 레벨로 평가 됩니다,
+    
+*/
+
+SELECT last_name, UPPER(CONCAT(SUBSTR(last_name, 1, 8), '_UB'))
+FROM employees
+WHERE department_id = 60;
+
+
+--MVL() 함수 - null 값을 실제 지정한 값으로 반환한다. (null이 연산이 안될때 사용)
+SELECT last_name, salary, NVL(commission_pct,0),
+    (salary*12)+(salary*12*NVL(commission_pct,0)) AS AN_SAL
+FROM employees;
+
+-- NVL2() 함수 
+-- 첫 번재 표현식을 검사합니다. 첫번째 표현식이 null이 아니면 두번째 표현식을 반환합니다.
+--첫번째 표현식이 null이면 세번째 표현식이 반환합니다.
+SELECT last_name, sAlary, commission_pct,
+    NVL2(commission_pct, 'SAL+COMM', 'SAL') AS income
+FROM employees
+WHERE department_id IN (50, 80);
+
+--NULLIF() 함수 
+--두 표현식을 바교하고 같으면 null을 반환하고 다르면 expr1을 반환합니다
+--그러나 expr1에 대해 리터럴 NULL을 지정할 수 없습니다.
+SELECT first_name, LENGTH(first_name) AS expr1,
+        last_name, LENGTH(last_name) AS expr2,
+        NULLIF(LENGTH(first_name), LENGTH(last_name)) AS result
+FROM employees;
+
+--COALESCE() 함수
+--리스트에서 nul이 아닌 첫번째 표현식을반환합니다.
+SELECT last_name, employee_id,
+        COALESCE(TO_CHAR(commission_pct), TO_CHAR(manager_id), 'No commission end no manager')
+FROM employees;
+
+--조건부 표현식
+/*
+CASE 식
+    IF-THEN-ELSE문 작업을 수행하여 조건부 조회를 편리하게 수행하도록 합니다.
+*/
+
+SELECT last_name, job_id, salary,
+        case job_id
+            WHEN 'IT_PROG' THEN 1.10*salary
+            WHEN 'ST_CLERK' THEN 1.15*salary
+            WHEN 'SA_REP' THEN 1.20*salary
+            ELSE salary
+        END AS REVISED_SALARY
+FROM employees;
+
+--DECODE() 함수
+--CASE 식과 유사한 작업을 수행한다.
+SELECT last_name, job_id, salary,
+        DECODE(job_id, 'IT_FROG',1.10*salary,
+                        'ST_CLERK',1.15*salary,
+                        'SA_REP',1.20*salary,
+                        salary)AS REVISED_SALARY
+FROM employees;
+
+
+
+
+
+
+
 
 
 
